@@ -22,7 +22,7 @@
     <ProjectTypeGuids>{BAA0C2D2-18E2-41B9-852F-F413020CAA33};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F684AB35-9DE0-4495-A259-A2F3A63D3BBD}</ProjectGuid>
+    <ProjectGuid>{10669779-259C-48E4-BAAF-9144D6C5D15C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoStandardLibraries>false</NoStandardLibraries>
     <RootNamespace>OutlookEmailMonitor</RootNamespace>
