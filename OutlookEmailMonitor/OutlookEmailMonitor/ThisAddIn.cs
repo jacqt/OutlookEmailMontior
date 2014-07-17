@@ -45,8 +45,14 @@ namespace OutlookEmailMonitor
         String email;
         int most_recent_mail_hashcode;
 
+#if DEBUG
+        private const String url = "http://localhost:8080/send_data";
+#else
         private const String url = "http://107.170.81.203:8080/send_data";
+#endif
 
+        private const int MAX_TRIES = 7;
+        private const int SLEEP_TIME = 10*1000; //10 seconds
         
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
@@ -82,7 +88,7 @@ namespace OutlookEmailMonitor
                 new Outlook.ItemsEvents_ItemAddEventHandler(items_ItemAdd);
 
 #if DEBUG
-            //Storage.saveFile("most_recent_email_hash", "foo"); //Force outlook to load everything again
+            Storage.saveFile("most_recent_email_hash", "foo"); //Force outlook to load everything again
 #endif
             Thread process_emails_thread = new Thread(ProcessUnprocessedEmails);
             process_emails_thread.Start();
@@ -91,12 +97,13 @@ namespace OutlookEmailMonitor
 
         private void ProcessUnprocessedEmails()
         {
-            object item = items.GetLast();
-            String most_recent_email_hash = item.GetHashCode().ToString();
-            Debug.WriteLine(most_recent_email_hash);
+            object item = items.GetNext();
 
             Data data = new Data();
-            int i = 0;
+            int count = 0;
+            bool was_success;
+            int tries;
+            int sleep_time;
             while (isUnprocessed(item))
             {
                 Outlook.MailItem mail_item = item as Outlook.MailItem;
@@ -112,11 +119,55 @@ namespace OutlookEmailMonitor
                     //Debug.WriteLine("Latency: " + latency.ToString());
                     data.Add(new DataMember(sent_time, latency));
                 }
-                item = items.GetPrevious();
-                ++i;
+                ++count;
+                if (count > 100)
+                {
+                    was_success = sendData(data);
+                    tries = 0;
+                    sleep_time = SLEEP_TIME;
+                    while (!was_success && tries < MAX_TRIES)
+                    {
+                        Thread.Sleep(sleep_time);
+                        was_success = sendData(data);
+                        sleep_time = sleep_time * 4; //Quadruple sleep time at each time
+                        ++tries;
+                    }
+                    if (was_success)
+                    {
+                        data = new Data();
+                        count = 0;
+                        //Save our progress
+                        String most_recent_email_hash = item.GetHashCode().ToString();
+                        Storage.saveFile("most_recent_email_hash", most_recent_email_hash);
+                    }
+                    else
+                    {
+                        //Server is not responding.Let us die.
+                        return;
+                    }
+                }
+                item = items.GetNext();
             }
-            Storage.saveFile("most_recent_email_hash", most_recent_email_hash);
-            sendData(data);
+            was_success = sendData(data);
+            tries = 0;
+            sleep_time = SLEEP_TIME;
+            while (!was_success && tries < MAX_TRIES)
+            {
+                Thread.Sleep(sleep_time);
+                was_success = sendData(data);
+                sleep_time = sleep_time * 4; //Quadruple sleep time at each time
+                ++tries;
+            }
+            if (was_success)
+            {
+                //Save our progress
+                String most_recent_email_hash = data[data.Count-1].GetHashCode().ToString();
+                Storage.saveFile("most_recent_email_hash", most_recent_email_hash);
+            }
+            else
+            {
+                //Server is not responding
+            }
         }
 
         private bool isUnprocessed(object item)
@@ -136,7 +187,7 @@ namespace OutlookEmailMonitor
             return true;
         }
 
-        private void sendData(Data data)
+        private bool sendData(Data data)
         {
             String data_serialized = Newtonsoft.Json.JsonConvert.SerializeObject(data);
             Debug.WriteLine(data_serialized);
@@ -148,11 +199,12 @@ namespace OutlookEmailMonitor
             parameters.Add(new Parameter("data", data_serialized));
             try
             {
-                client.performPostRequest(parameters);
+                String result  = client.performPostRequest(parameters);
+                return true;
             }
             catch (Exception e)
             {
-                //TODO
+                return false;
             }
         }
 
@@ -177,8 +229,8 @@ namespace OutlookEmailMonitor
 
                 Data data = new Data();
                 data.Add(new DataMember(sent_time, latency));
-                sendData(data);
-                    //Debug.WriteLine("Latency: " + latency.ToString());
+                Thread process_email_thread = new Thread(() =>sendData(data));
+                process_email_thread.Start();
             }
         }
         #region VSTO generated code

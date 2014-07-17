@@ -17,7 +17,7 @@ namespace OutlookEmailMonitor
             server_url = _server_url;
         }
 
-        public async Task<String> performPostRequest(List<Parameter> parameters)
+        public String performPostRequest(List<Parameter> parameters)
         {
             using (WebClient wb = new WebClient())
             {
@@ -34,7 +34,7 @@ namespace OutlookEmailMonitor
                 }
                 catch (Exception e)
                 {
-                    return "Failed...?";
+                    return "Failed";
                 }
             }
         }
