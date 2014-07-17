@@ -22,5 +22,29 @@ namespace OutlookEmailMonitor.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string most_recent_email_hash {
+            get {
+                return ((string)(this["most_recent_email_hash"]));
+            }
+            set {
+                this["most_recent_email_hash"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string app_guid {
+            get {
+                return ((string)(this["app_guid"]));
+            }
+            set {
+                this["app_guid"] = value;
+            }
+        }
     }
 }

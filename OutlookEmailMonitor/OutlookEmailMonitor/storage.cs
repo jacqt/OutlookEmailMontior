@@ -8,15 +8,20 @@ namespace OutlookEmailMonitor
 {
     class Storage
     {
-        public void saveFile(String name, String data)
+        public static void saveFile(String name, String data)
         {
-
+            Properties.Settings.Default[name] = data;
+            Properties.Settings.Default.Save();
         }
 
-        public String loadFile(String name)
+        public static String loadFile(String name)
         {
-            return "TODO";
+            object o = Properties.Settings.Default[name];
+            if (o != null)
+            {
+                return o.ToString();
+            }
+            return null;
         }
-
     }
 }
